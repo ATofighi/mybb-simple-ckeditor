@@ -37,7 +37,9 @@ CKEDITOR.editorConfig = function (config) {
 	
 	config.height = '300px';
 	
-	config.language = 'fa';
+	if($('html').attr('lang')) {
+		config.language = $('html').attr('lang');
+	}
 	
 	config.contentsCss = 'myCKEditor/contents.css';
 };
