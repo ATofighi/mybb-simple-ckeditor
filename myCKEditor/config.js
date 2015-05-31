@@ -33,7 +33,7 @@ CKEDITOR.editorConfig = function (config) {
 
 	config.image_previewText = ' ';
 
-	config.skin = 'office2013';
+	config.skin = 'moono';
 	
 	config.height = '300px';
 	

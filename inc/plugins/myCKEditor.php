@@ -24,7 +24,7 @@ function myCKEditor_info()
 		'website'		=> 'http://my-bb.ir',
 		'author'		=> 'ATofighi',
 		'authorsite'	=> 'http://my-bb.ir',
-		'version'		=> '1.0',
+		'version'		=> '1.0.0',
 		'compatibility'	=> '18*',
 		'codename'		=> 'myckeditor'
 	);
@@ -82,6 +82,10 @@ function myckeditor($bind="message", $smilies = true) {
 			text-align: right!important;
 			direction: rtl!important;
 		}
+		
+		.cke_reset_all, .cke_reset_all * {
+			font: normal normal normal 12px Tahoma,Arial,Helvetica,Verdana,Sans-Serif!important;
+		}
 		</style>
 		<script type="text/javascript">
 			var SmilieCodes = {$jsonSimileCodes};
@@ -104,7 +108,7 @@ function myckeditor($bind="message", $smilies = true) {
 				}
 			};
 			
-			if(Thread) {
+			if(typeof Thread == 'object') {
 				Thread.multiQuotedLoaded = function(request)
 				{
 					var json = $.parseJSON(request.responseText);
