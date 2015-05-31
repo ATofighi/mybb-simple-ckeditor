@@ -1,0 +1,15 @@
+{
+  "name": "atofighi-myckeditor",
+  "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "github.com/atofighi/myckeditor"
+  },
+  "dependencies": {
+    "bower": "^1.3.12",
+    "browserify": "^8.1.3",
+    "browserify-shim": "^3.8.2",
+    "del": "^1.1.1",
+    "gulp": "^3.8.11"
+  }
+}
