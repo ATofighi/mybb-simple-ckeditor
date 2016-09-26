@@ -3,7 +3,7 @@
  * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
-
+var ALI;
 (function () {
 	CKEDITOR.on('dialogDefinition', function (ev) {
 		var tab,
@@ -649,7 +649,7 @@
 				fragment.writeHtml(writer, bbcodeFilter);
 				return writer.getHtml(true);
 			}
-
+			
 			editor.BBCodeToHtml = BBCodeToHtml;
 
 			var bbcodeFilter = new CKEDITOR.htmlParser.filter();
@@ -659,7 +659,7 @@
 						//var quoted = new CKEDITOR.htmlParser.element('div');
 						//quoted.setHtml(element.getHtml());
 						//element.setHtml('');
-						//element.add(quoted);
+						//element.add(quoted);						
 						var citeText = element.attributes.cite;
 						if (citeText) {
 							var cite = new CKEDITOR.htmlParser.element('cite');
@@ -838,16 +838,16 @@
 
 								if (citeText) {
 									value = "'"+citeText+"'";
-
+									
 									if(cite.attributes['data-pid']) {
 										value += " pid='"+cite.attributes['data-pid']+"'";
 									}
 									if(cite.attributes['data-dateline']) {
 										value += " dateline='"+cite.attributes['data-dateline']+"'";
 									}
-
+									
 									quoted = '';
-
+			
 									for(var child = 1; child < element.children.length; child++) {
 										if(typeof element.children[child].getOuterHtml == 'function') {
 											quoted += element.children[child].getOuterHtml();

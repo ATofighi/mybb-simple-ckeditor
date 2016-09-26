@@ -13,6 +13,8 @@ if(!defined('IN_MYBB'))
 	die('This file cannot be accessed directly.');
 }
 
+//define('LOCAL_CKEDITOR', true);
+
 function simpleckeditor_info()
 {
 
@@ -31,7 +33,7 @@ function simpleckeditor_info()
 function simpleckeditor_install()
 {
     global $mybb, $db, $lang;
-    
+
 }
 
 function simpleckeditor_is_installed()
@@ -39,7 +41,7 @@ function simpleckeditor_is_installed()
 	global $db;
 	$query = $db->simple_select('settinggroups', 'gid', "name='simpleckeditor'");
 	return $db->num_rows($query) == 1;
-    
+
 }
 
 function simpleckeditor_getthemeeditors() {
@@ -197,7 +199,7 @@ function simpleckeditor_activate()
 	}
 
 	$db->delete_query('settings', "gid='{$gid}' AND description='SIMPLECKEDITORDELETEMARKER'");
-	
+
 	rebuild_settings();
 
 }
@@ -205,7 +207,7 @@ function simpleckeditor_activate()
 function simpleckeditor_deactivate()
 {
     global $mybb, $db, $lang;
-    
+
     require_once MYBB_ROOT . "/inc/adminfunctions_templates.php";
     find_replace_templatesets("showthread_quickreply", "#" . preg_quote('{$codebuttons}') . "#i", '', 0);
     find_replace_templatesets("showthread_quickreply", "#" . preg_quote('{$smilieinserter}') . "#i", '', 0);
@@ -226,6 +228,11 @@ function simpleckeditor_uninstall()
 
 function simpleckeditor($bind="message", $smilies = true) {
 	global $cache, $mybb, $lang;
+
+	if(!simpleckeditor_is_allowed()) {
+		return false;
+	}
+
 	$smilie_cache = $cache->read("smilies");
 	$smilieArr = $smilieCodes = [];
 	usort($smilie_cache, function ($a, $b)
@@ -245,7 +252,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 	}
 	$jsonSimiles =  json_encode($smilieArr);
 	$jsonSimileCodes =  json_encode($smilieCodes);
-	
+
 	$dir = 'ltr';
 	$startDir = 'left';
 	$endDir = 'right';
@@ -254,8 +261,14 @@ function simpleckeditor($bind="message", $smilies = true) {
 		$startDir = 'right';
 		$endDir = 'left';
 	}
+	if(defined('LOCAL_CKEDITOR')) {
+		$ckePath = $mybb->settings['bburl'].'/ckeditor/ckeditor.js';
+	}
+	else {
+		$ckePath = '//cdn.ckeditor.com/4.5.7/full/ckeditor.js';
+	}
 	$codebuttons = <<<CODE
-		<script src="//cdn.ckeditor.com/4.5.7/full/ckeditor.js"></script>
+		<script src="{$ckePath}"></script>
 		<style>
 		.cke_source  {
 			padding: 20px!important;
@@ -266,16 +279,19 @@ function simpleckeditor($bind="message", $smilies = true) {
 			text-align: {$startDir}!important;
 			direction: {$dir}!important;
 		}
-		
+
 		.cke_reset_all, .cke_reset_all * {
 			font-family: Tahoma, sans-serif, Arial, Verdana, "Trebuchet MS"!important;
 		}
 		</style>
 		<script type="text/javascript">
-			for(var pluginIndex in ['mybbmycode','mybbinsertcode','mybbinsertphp'])
 			{
-				var plugin = ['mybbmycode','mybbinsertcode','mybbinsertphp'][pluginIndex];
-				CKEDITOR.plugins.addExternal( plugin, '{$mybb->settings['bburl']}/jscripts/ckeditor-plugins/plugins/'+plugin+'/', 'plugin.js' );
+				var plugins = ['mybbmycode','mybbinsertcode','mybbinsertphp', 'mybbfixquote'];
+				for(var pluginIndex in plugins)
+				{
+					var plugin = plugins[pluginIndex];
+					CKEDITOR.plugins.addExternal( plugin, '{$mybb->settings['bburl']}/jscripts/ckeditor-plugins/plugins/'+plugin+'/', 'plugin.js' );
+				}
 			}
 			var SmilieCodes = {$jsonSimileCodes};
 			var Smilies = {$jsonSimiles};
@@ -287,13 +303,27 @@ function simpleckeditor($bind="message", $smilies = true) {
 			} );
 			MyBBEditor = {
 				insertText: function(msg) {
+
 					if(simpleckeditor.mode == 'wysiwyg') {
 						simpleckeditor.insertHtml(simpleckeditor.BBCodeToHtml(msg));
 					}
 					else {
-						var value = simpleckeditor.getData();
-						value += msg;
-						simpleckeditor.setData(value);
+						var input = simpleckeditor.ui.space('contents')
+												  .getElementsByTag('textarea').$[0];
+			            input.focus();
+
+			            if(typeof input.selectionStart != 'undefined')
+			            {
+			               var start = input.selectionStart;
+			               var end = input.selectionEnd;
+
+			               input.value = input.value.substr(0, start) + msg + input.value.substr(end);
+
+						   var pos = start+msg.length;
+
+						   input.selectionStart = pos;
+			               input.selectionEnd = pos;
+			            }
 					}
 				},
 				getData: function() {
@@ -303,7 +333,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 					return simpleckeditor.focus();
 				}
 			};
-			
+
 			if(typeof Thread == 'object') {
 				Thread.multiQuotedLoaded = function(request)
 				{
@@ -345,7 +375,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 
 					$('#message').focus();
 				};
-				
+
 				Thread.quickReply = function(e)
 				{
 					e.stopPropagation();
@@ -358,7 +388,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 					this.quick_replying = 1;
 					simpleckeditor.updateElement();
 					var post_body = $('#quick_reply_form').serialize();
-					
+
 					// Spinner!
 					var qreply_spinner = $('#quickreply_spinner');
 					qreply_spinner.show();
@@ -371,7 +401,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 						complete: function (request, status)
 						{
 							Thread.quickReplyDone(request, status);
-							
+
 							// Get rid of spinner
 							qreply_spinner.hide();
 						}
@@ -379,7 +409,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 
 					return false;
 				}
-				
+
 				Thread.quickReplyDone = function(request, status)
 				{
 					this.quick_replying = 0;
@@ -432,7 +462,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 							}
 						}
 					}
-					
+
 					if(json.hasOwnProperty("errors"))
 						return false;
 
@@ -442,10 +472,10 @@ function simpleckeditor($bind="message", $smilies = true) {
 						var post = document.createElement("div");
 
 						$('#posts').append(json.data);
-						
+
 						if (typeof inlineModeration != "undefined") // Guests don't have this object defined
 							$("#inlinemod_" + pid).on('change', inlineModeration.checkItem);
-							
+
 						Thread.quickEdit("#pid_" + pid);
 
 						// Eval javascript
@@ -482,6 +512,11 @@ CODE;
 $plugins->add_hook('global_end', 'setCKeditor');
 function setCKeditor() {
 	global $templates;
+
+	if(!simpleckeditor_is_allowed()) {
+		return false;
+	}
+
 	$templates->cache['codebuttons'] = simpleckeditor('{$bind}');
 }
 
@@ -489,6 +524,11 @@ function setCKeditor() {
 $plugins->add_hook('private_read_end','ckeditorPMQuickreply');
 function ckeditorPMQuickreply(){
 	global $mybb, $quickreply;
+
+	if(!simpleckeditor_is_allowed()) {
+		return false;
+	}
+
 	if($quickreply) {
 		$quickreply .= simpleckeditor("message");
 	}
@@ -498,6 +538,11 @@ $plugins->add_hook('showthread_start','ckeditorQuickreply');
 function ckeditorQuickreply(){
 	global $mybb, $forumpermissions, $thread, $fid, $forum;
 	global $codebuttons, $smilieinserter;
+
+	if(!simpleckeditor_is_allowed()) {
+		return false;
+	}
+
 	if(($forumpermissions['canpostreplys'] != 0 && $mybb->user['suspendposting'] != 1 && ($thread['closed'] != 1 || is_moderator($fid)) && $mybb->settings['quickreply'] != 0 && $mybb->user['showquickreply'] != '0' && $forum['open'] != 0) && ($mybb->settings['bbcodeinserter'] != 0 && $forum['allowmycode'] != 0 && (!$mybb->user['uid'] || $mybb->user['showcodebuttons'] != 0))) {
 		$codebuttons = simpleckeditor("message");
 		if($forum['allowsmilies'] != 0)
@@ -550,4 +595,32 @@ function simpleckeditor_settings()
 {
 	global $lang;
 	$lang->load('simpleckeditor');
+}
+
+function simpleckeditor_is_allowed(){
+	global $mybb;
+	$disallowedPages = explode("\n", $mybb->settings['simpleckeditor_disallowed_pages']);
+	foreach($disallowedPages as $page) {
+
+		list($page, $queryStr) = explode("?", $page, 2);
+
+		$query = array();
+		parse_str($queryStr, $query);
+
+		$matched = true;
+
+		if(THIS_SCRIPT != $page) {
+			$matched = false;
+		}
+
+		foreach($query as $key => $val) {
+			if($mybb->get_input($key) != $val) {
+				$matched = false;
+			}
+		}
+
+		if($matched)
+			return false;
+	}
+	return true;
 }
