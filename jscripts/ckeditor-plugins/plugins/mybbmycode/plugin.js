@@ -79,6 +79,7 @@
 		attributesMap = {
 			url: 'href',
 			email: 'mailhref',
+			img: 'widthheight',
 			quote: 'cite',
 			list: 'listType',
 			code: 'codeblock',
@@ -138,7 +139,7 @@
 
 	CKEDITOR.BBCodeParser = function () {
 		this._ = {
-			bbcPartsRegex: /(?:\[([^\/\]=]*?)(?:=([^\]]*?))?\])|(?:\[\/([a-z]{1,16})\])/ig
+			bbcPartsRegex: /(?:\[([^\/\[\]=]*?)(?:=([^\]]*?))?\])|(?:\[\/([a-z]{1,16})\])/ig
 		};
 	};
 
@@ -146,6 +147,7 @@
 		parse: function (bbcode) {
 			var parts, part,
 				lastIndex = 0;
+			var isCodeBlockOpenned = false;
 
 			while (( parts = this._.bbcPartsRegex.exec(bbcode) )) {
 				var tagIndex = parts.index;
@@ -172,57 +174,72 @@
 
 				// Opening tag
 				if (parts[1]) {
-					var tagName = bbcodeMap[part],
-						attribs = {},
-						styles = {},
-						optionPart = parts[2];
-
-					if (attributesMap[part]) {
-						if (part == 'code') {
-							attribs['class'] = 'codeblock-code';
-						} else if (part == 'php') {
-							attribs['class'] = 'codeblock-php';
-						}
-						attribs[attributesMap[part]] = optionPart;
+					if (isCodeBlockOpenned) {
+						this.onText(parts[0]);
 					}
-					if (optionPart) {
-						if (part == 'list') {
-							if (!isNaN(optionPart))
-								optionPart = 'decimal';
-							else if (optionPart == 'i')
-								optionPart = 'lower-roman';
-							else if (optionPart == 'I')
-								optionPart = 'upper-roman';
-							else if (/^[a-z]+$/.test(optionPart))
-								optionPart = 'lower-alpha';
-							else if (/^[A-Z]+$/.test(optionPart))
-								optionPart = 'upper-alpha';
-						}
+					else {
+						var tagName = bbcodeMap[part],
+							attribs = {},
+							styles = {},
+							optionPart = parts[2];
 
-						if (stylesMap[part]) {
-							if (part == 'align') {
-								if (optionPart != 'left' && optionPart != 'right' && optionPart != 'center' && optionPart != 'justify') {
-									optionPart = 'left';
-								}
+						if (attributesMap[part]) {
+							if (part == 'code') {
+								attribs['class'] = 'codeblock-code';
+								isCodeBlockOpenned = 'code';
+							} else if (part == 'php') {
+								attribs['class'] = 'codeblock-php';
+								isCodeBlockOpenned = 'php';
 							}
-
-							styles[stylesMap[part]] = optionPart;
-							attribs.style = serializeStyleText(styles);
-						} else if (attributesMap[part]) {
 							attribs[attributesMap[part]] = optionPart;
 						}
+						if (optionPart) {
+							if (part == 'list') {
+								if (!isNaN(optionPart))
+									optionPart = 'decimal';
+								else if (optionPart == 'i')
+									optionPart = 'lower-roman';
+								else if (optionPart == 'I')
+									optionPart = 'upper-roman';
+								else if (/^[a-z]+$/.test(optionPart))
+									optionPart = 'lower-alpha';
+								else if (/^[A-Z]+$/.test(optionPart))
+									optionPart = 'upper-alpha';
+							}
+
+							if (stylesMap[part]) {
+								if (part == 'align') {
+									if (optionPart != 'left' && optionPart != 'right' && optionPart != 'center' && optionPart != 'justify') {
+										optionPart = 'left';
+									}
+								}
+
+								styles[stylesMap[part]] = optionPart;
+								attribs.style = serializeStyleText(styles);
+							} else if (attributesMap[part]) {
+								attribs[attributesMap[part]] = optionPart;
+							}
+						}
+
+						// Two special handling - image and email, protect them
+						// as "span" with an attribute marker.
+						if (part == 'email' || part == 'img')
+							attribs.bbcode = part;
+
+						this.onTagOpen(tagName, attribs, CKEDITOR.dtd.$empty[tagName]);
 					}
-
-					// Two special handling - image and email, protect them
-					// as "span" with an attribute marker.
-					if (part == 'email' || part == 'img')
-						attribs.bbcode = part;
-
-					this.onTagOpen(tagName, attribs, CKEDITOR.dtd.$empty[tagName]);
 				}
 				// Closing tag
 				else if (parts[3]) {
-					this.onTagClose(bbcodeMap[part]);
+					if (isCodeBlockOpenned == part) {
+						isCodeBlockOpenned = false;
+					}
+					if (isCodeBlockOpenned) {
+						this.onText(parts[0], false);
+					}
+					else {
+						this.onTagClose(bbcodeMap[part], parts[0]);
+					}
 				}
 			}
 
@@ -380,7 +397,7 @@
 				currentNode = element;
 		};
 
-		parser.onTagClose = function (tagName) {
+		parser.onTagClose = function (tagName, text) {
 			// Check if there is any pending tag to be closed.
 			for (var i = pendingInline.length - 1; i >= 0; i--) {
 				// If found, just remove it from the list.
@@ -393,8 +410,7 @@
 			var pendingAdd = [],
 				newPendingInline = [],
 				candidate = currentNode;
-
-			while (candidate.type && candidate.name != tagName) {
+			while (candidate != null && candidate.type && candidate.name != tagName) {
 				// If this is an inline element, add it to the pending list, if we're
 				// really closing one of the parents element later, they will continue
 				// after it.
@@ -409,7 +425,7 @@
 				candidate = candidate.parent;
 			}
 
-			if (candidate.type) {
+			if (candidate != null && candidate.type) {
 				// Add all elements that have been found in the above loop.
 				for (i = 0; i < pendingAdd.length; i++) {
 					var node = pendingAdd[i];
@@ -428,6 +444,8 @@
 
 				pendingInline = pendingInline.concat(newPendingInline);
 			}
+
+
 		};
 
 		parser.onText = function (text) {
@@ -665,14 +683,14 @@
 							var cite = new CKEDITOR.htmlParser.element('cite');
 							var citeValue = citeText.replace(/^"|"$/g, '');
 							var match = citeText.match(/pid=(?:&quot;|\"|')?([0-9]+)[\"']?(?:&quot;|\"|')/i, citeText);
-							if(parseInt(match[1])) {
+							if(match && parseInt(match[1])) {
 								cite.attributes['data-pid'] = parseInt(match[1]);
 								citeValue = citeValue.replace(/pid=(?:&quot;|\"|')?([0-9]+)[\"']?(?:&quot;|\"|')/i, '');
 							}
 							delete match;
 
 							var match = citeText.match(/dateline=(?:&quot;|\"|')?([0-9]+)[\"']?(?:&quot;|\"|')/i, citeText);
-							if(parseInt(match[1])) {
+							if(match && parseInt(match[1])) {
 								cite.attributes['data-dateline'] = parseInt(match[1]);
 								citeValue = citeValue.replace(/dateline=(?:&quot;|\"|')?([0-9]+)[\"']?(?:&quot;|\"|')/i, '');
 							}
@@ -696,6 +714,19 @@
 							if (bbcode == 'img') {
 								element.name = 'img';
 								element.attributes.src = element.children[0].value;
+
+								if(element.attributes.widthheight) {
+									var size = element.attributes.widthheight.split('x');
+									if (size && size[0] && size[1]) {
+										if (parseInt(size[0]) && parseInt(size[1])) {
+											if (size[0] > 1 && size[1] > 1) {
+												element.attributes.width = size[0] + 'px';
+												element.attributes.height = size[1] + 'px';
+											}
+										}
+									}
+								}
+
 								element.children = [];
 							} else if (bbcode == 'email') {
 								element.name = 'a';
@@ -882,12 +913,25 @@
 
 							// Translate smiley (image) to text emotion.
 							var src = attributes['data-cke-saved-src'] || attributes.src,
-								alt = attributes.alt;
+								alt = attributes.alt,
+								width = attributes.width,
+								height = attributes.height;
 
 
 							if (element.hasClass('smilie') && attributes['data-smilie']) {
 								return new CKEDITOR.htmlParser.text(attributes['data-smilie']);
 							}
+
+							if (width && height) {
+								width = width.replace('px', '');
+								height = height.replace('px', '');
+								if (parseInt(width) && parseInt(height)) {
+									if (width > 1 && height > 1) {
+										value = width + 'x' + height;
+									}
+								}
+							}
+
 							element.children = [new CKEDITOR.htmlParser.text(src)];
 						}
 

@@ -19,12 +19,15 @@ CKEDITOR.editorConfig = function (config) {
 
 	config.image_previewText = ' ';
 
-	config.skin = 'moono';
+	config.skin = 'moono-lisa';
 
 	config.height = '300px';
 
 	config.pasteFilter = 'strong u i strike; span{!color}; span{!size};span{!font-family};div{!text-align};	blockquote;a[!href];hr;ul li;ol li; img[!src];blockquote cite;div(!codeblock-code);div(!codeblock-php);';
 	config.allowedContent = 'strong u i strike; span{!color}; span{!size};span{!font-family};div{!text-align};	blockquote;a[!href];hr;ul li;ol li; img[!src]{!width,!height};blockquote cite;div(!codeblock-code);div(!codeblock-php);';
+
+	config.dialog_backgroundCoverColor = 'black';
+
 
 
 	if($('html').attr('lang')) {
