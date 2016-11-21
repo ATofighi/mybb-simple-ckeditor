@@ -1,12 +1,12 @@
 <?php
 /**
- * MyBB 1.8
- * Copyright 2014 MyBB Group, All Rights Reserved
+ * Simple CKEditor
+ * Copyright 2016 AliReza_Tofighi, All Rights Reserved
  *
- * Website: http://www.mybb.com
- * License: http://www.mybb.com/about/license
+ * Website: http://my-bb.ir
  *
  */
+
 
 // Make sure we can't access this file directly from the browser.
 if(!defined('IN_MYBB'))
