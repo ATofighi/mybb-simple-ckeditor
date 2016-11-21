@@ -1,9 +1,10 @@
 <?php
 /**
- * Simple CKEditor
- * Copyright 2016 AliReza_Tofighi, All Rights Reserved
+ * MyBB 1.8
+ * Copyright 2014 MyBB Group, All Rights Reserved
  *
- * Website: http://my-bb.ir
+ * Website: http://www.mybb.com
+ * License: http://www.mybb.com/about/license
  *
  */
 
@@ -120,7 +121,7 @@ function simpleckeditor_activate()
 		'skin'	=> array(
 			'optionscode'	=> 'php
 	".simpleckeditor_getthemeeditors()."',
-			'value'			=> 'moono'
+			'value'			=> 'moono-lisa'
 		),
 		'toolbar'	=> array(
 			'optionscode'	=> 'textarea',
@@ -128,7 +129,7 @@ function simpleckeditor_activate()
 	['Source', '-', 'NewPage'],
 	['Cut', 'Copy', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
 	['Find', 'Replace', '-', 'SelectAll', '-', 'Scayt'],
-	['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'],
+	['Bold', 'Italic', 'Underline', 'Strike', '-', 'CopyFormatting', 'RemoveFormat'],
 	['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
 	['Blockquote', '-', 'mybbinsertcode', 'mybbinsertphp'],
 	['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'Font', 'FontSize', 'TextColor'],
@@ -265,7 +266,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 		$ckePath = $mybb->settings['bburl'].'/ckeditor/ckeditor.js';
 	}
 	else {
-		$ckePath = '//cdn.ckeditor.com/4.5.7/full/ckeditor.js';
+		$ckePath = '//cdn.ckeditor.com/4.6.0/full/ckeditor.js';
 	}
 	$codebuttons = <<<CODE
 		<script src="{$ckePath}"></script>
@@ -305,7 +306,7 @@ function simpleckeditor($bind="message", $smilies = true) {
 				insertText: function(msg) {
 
 					if(simpleckeditor.mode == 'wysiwyg') {
-						simpleckeditor.insertHtml(simpleckeditor.BBCodeToHtml(msg));
+						simpleckeditor.insertHtml(simpleckeditor.BBCodeToHtml(msg+"‌"));
 					}
 					else {
 						var input = simpleckeditor.ui.space('contents')
