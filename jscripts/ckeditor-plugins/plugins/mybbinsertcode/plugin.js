@@ -81,7 +81,14 @@ CKEDITOR.plugins.add('mybbinsertcode',
 										}
 									},
 									commit: function (element) {
-										element.setHtml(CKEDITOR.tools.htmlEncode(this.getValue()).replace(/\n/g, "<br>"));
+										var value = CKEDITOR.tools.htmlEncode(this.getValue());
+										value = value.replace(/\n/g, "<br>");
+										value = value.replace(/\$/g, '&#36;');
+										value = value.replace(/\$([0-9])/g, '\\\$\\1');
+										value = value.replace(/\\/g, '&#92;');
+										value = value.replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+										value = value.replace(/  /g, '&nbsp;&nbsp;');
+										element.setHtml(value);
 									}
 								}
 							]
