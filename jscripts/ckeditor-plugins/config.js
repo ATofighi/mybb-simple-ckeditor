@@ -12,7 +12,7 @@ CKEDITOR.editorConfig = function (config) {
 	config.removeButtons = 'Subscript,Superscript';
 
 
-	config.fontSize_sizes = 'X Small/x-small;Small/small;Meduim/medium;Large/large;X Large/x-large;XX Large/xx-large';
+	config.fontSize_sizes = 'X Small/x-small;Small/small;Medium/medium;Large/large;X Large/x-large;XX Large/xx-large';
 
 	// Simplify the dialog windows.
 	config.removeDialogTabs = 'image:advanced;link:advanced';
