@@ -109,9 +109,8 @@
 	// Build regexp for the list of smiley text.
 	for (var i in SmilieCodes) {
 		smileyReverseMap[SmilieCodes[i]] = i;
-		smileyRegExp.push(SmilieCodes[i].replace(/\(|\)|\:|\/|\*|\-|\|/g, function (match) {
-			return '\\' + match;
-		}));
+		smileyRegExp.push(SmilieCodes[i].replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&"));
+		// http://stackoverflow.com/questions/3561493/is-there-a-regexp-escape-function-in-javascript/3561711
 	}
 
 	smileyRegExp = new RegExp(smileyRegExp.join('|'), 'g');
